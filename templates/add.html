@@ -1,0 +1,24 @@
+{% extends 'layout.html' %}
+{% block content %}
+<h2>食品追加</h2>
+<form method="POST" enctype="multipart/form-data">
+    <div class="form-group">
+        <label>食品名</label>
+        <input type="text" name="name" class="form-control" required>
+    </div>
+    <div class="form-group">
+        <label>数量</label>
+        <input type="text" name="quantity" class="form-control" required>
+    </div>
+    <div class="form-group">
+        <label>賞味期限</label>
+        <input type="date" name="expiry_date" class="form-control" required>
+    </div>
+    <div class="form-group">
+        <label>画像を撮影または選択</label>
+        <input type="file" name="image" class="form-control-file" accept="image/*" capture="environment">
+        <small class="form-text text-muted">スマホではカメラが起動します</small>
+    </div>
+    <button type="submit" class="btn btn-primary">登録</button>
+</form>
+{% endblock %}

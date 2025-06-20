@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>レシピ検索</title>
+</head>
+<body>
+    <h1>レシピ検索</h1>
+    <form action="{{ url_for('search_recipe') }}" method="POST">
+        <label for="food_name">食品名で検索：</label>
+        <input type="text" id="food_name" name="food_name" required><br><br>
+        <input type="submit" value="検索">
+    </form>
+</body>
+</html>
