@@ -4,7 +4,12 @@
 <h2>食品一覧</h2>
 <a href="{{ url_for('add') }}" class="btn btn-primary">＋ 食品追加</a>
 
-
+{% if filtered_tag %}
+  <div class="mb-3">
+    <span>タグ絞り込み中: <strong>{{ filtered_tag }}</strong></span>
+    <a href="{{ url_for('index') }}" class="btn btn-sm btn-outline-secondary ms-2">元に戻す</a>
+  </div>
+{% endif %}
 <!-- 通知表示 -->
 {% if expired_foods %}
 <div class="alert alert-danger mt-3">
@@ -26,40 +31,41 @@
   </ul>
 </div>
 {% endif %}
+
 <div class="mt-3">
   <button type="button" class="btn btn-sm btn-outline-primary" onclick="selectAll()">全選択</button>
   <button type="button" class="btn btn-sm btn-outline-secondary" onclick="deselectAll()">全解除</button>
   <button type="button" class="btn btn-sm btn-success ms-2" onclick="searchSelectedRecipes()">選択した食品でレシピ検索</button>
 </div>
+
 <script>
-function selectAll() {
-  document.querySelectorAll('input[name="selected_foods"]').forEach(cb => cb.checked = true);
-}
-
-function deselectAll() {
-  document.querySelectorAll('input[name="selected_foods"]').forEach(cb => cb.checked = false);
-}
-
-function toggleAll(source) {
-  const checkboxes = document.querySelectorAll('input[name="selected_foods"]');
-  checkboxes.forEach(cb => cb.checked = source.checked);
-}
-
-function searchSelectedRecipes() {
-  const selected = Array.from(document.querySelectorAll('input[name="selected_foods"]:checked'))
-                         .map(cb => cb.value);
-
-  if (selected.length === 0) {
-    alert("食品を選択してください。");
-    return;
+  function selectAll() {
+    document.querySelectorAll('input[name="selected_foods"]').forEach(cb => cb.checked = true);
   }
 
-  const query = encodeURIComponent(selected.join(" ") + " レシピ");
-  const url = "https://www.google.com/search?q=" + query;
-  window.open(url, "_blank");
-}
-</script>
+  function deselectAll() {
+    document.querySelectorAll('input[name="selected_foods"]').forEach(cb => cb.checked = false);
+  }
 
+  function toggleAll(source) {
+    const checkboxes = document.querySelectorAll('input[name="selected_foods"]');
+    checkboxes.forEach(cb => cb.checked = source.checked);
+  }
+
+  function searchSelectedRecipes() {
+    const selected = Array.from(document.querySelectorAll('input[name="selected_foods"]:checked'))
+      .map(cb => cb.value);
+
+    if (selected.length === 0) {
+      alert("食品を選択してください。");
+      return;
+    }
+
+    const query = encodeURIComponent(selected.join(" ") + " レシピ");
+    const url = "https://www.google.com/search?q=" + query;
+    window.open(url, "_blank");
+  }
+</script>
 
 <table class="table mt-3">
   <thead>
@@ -69,6 +75,7 @@ function searchSelectedRecipes() {
       <th>名前</th>
       <th>数量</th>
       <th>賞味期限</th>
+      <th>タグ</th>
       <th></th>
     </tr>
   </thead>
@@ -79,7 +86,8 @@ function searchSelectedRecipes() {
       <td><input type="checkbox" name="selected_foods" value="{{ food.name }}"></td>
       <td>
         {% if food.image_path %}
-        <br><img src="{{ url_for('static', filename='images/' + food.image_path.split('/')[-1]) }}" style="max-height:100px;">
+        <br><img src="{{ url_for('static', filename='images/' + food.image_path.split('/')[-1]) }}"
+          style="max-height:100px;">
         {% else %}
         no image
         {% endif %}
@@ -88,18 +96,23 @@ function searchSelectedRecipes() {
       <td>{{ food.quantity }}</td>
       <td>{{ food.expiry_date }}</td>
       <td>
-        <a href="https://www.google.com/search?q={{ food.name }}+レシピ" class="btn btn-sm btn-success" target="_blank">レシピ検索</a>
+        {% for tag in food.tags %}
+        <a href="{{ url_for('filter_by_tag') }}?tag={{ tag.name }}" class="badge bg-info text-dark">{{ tag.name }}</a>
+        {% endfor %}
+      </td>
+      <td>
+        <a href="https://www.google.com/search?q={{ food.name }}+レシピ" class="btn btn-sm btn-success"
+          target="_blank">レシピ検索</a>
         <a href="{{ url_for('edit', id=food.id) }}" class="btn btn-sm btn-secondary">編集</a>
         <a href="{{ url_for('delete', id=food.id) }}" class="btn btn-sm btn-danger">削除</a>
         {% if food.image_path %}
-        <a href="{{ url_for('delete_image', id=food.id)}}" class="btn btn-sm btn-danger">画像を削除</a>
+        <a href="{{ url_for('delete_image', id=food.id) }}" class="btn btn-sm btn-danger">画像を削除</a>
         {% endif %}
       </td>
     </tr>
     {% endfor %}
   </tbody>
 </table>
-</form>
 
 <!-- メモ表示 -->
 {% if memo %}

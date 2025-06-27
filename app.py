@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for
-from models import db, Food, Memo, NotificationSetting
+from models import db, Food, Memo, NotificationSetting, Tag
 from datetime import datetime, timedelta 
 from sqlalchemy import and_
 import os
@@ -53,7 +53,39 @@ def index():
         notify_foods=notify_foods,
         days_before=days_before
     )
-    
+   
+#tagで絞り込み
+@app.route('/filter_by_tag')
+def filter_by_tag():
+    tag_name = request.args.get('tag')
+    if not tag_name:
+        return redirect(url_for('index'))
+
+    tag = Tag.query.filter_by(name=tag_name).first()
+    if not tag:
+        return redirect(url_for('index'))
+
+    foods = tag.foods.order_by(Food.expiry_date).all()
+    memo = Memo.query.first()
+    today = datetime.today().date()
+
+    days_before = 3
+    notify_until = today + timedelta(days=days_before)
+    notify_foods = Food.query.filter(Food.expiry_date.between(today, notify_until)).order_by(Food.expiry_date).all()
+    expired_foods = Food.query.filter(Food.expiry_date < today).order_by(Food.expiry_date).all()
+
+    return render_template(
+        'index.html',
+        foods=foods,
+        today=today,
+        memo=memo,
+        expired_foods=expired_foods,
+        notify_foods=notify_foods,
+        days_before=days_before,
+        filtered_tag=tag_name,
+    )
+
+ 
 # 追加
 @app.route('/add', methods=['GET', 'POST'])
 def add():
@@ -69,8 +101,19 @@ def add():
             filename = secure_filename(image.filename)
             image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             image_path = f'static/images/{filename}'
-
-        food = Food(name=name, quantity=quantity, expiry_date=expiry_date, image_path=image_path)
+        
+        #tag処理
+        tags_input = request.form['tags']
+        tag_names = [t.strip() for t in tags_input.split(',') if t.strip()]
+        tags = []
+        for t in tag_names:
+            tag = Tag.query.filter_by(name=t).first()
+            if not tag:
+                tag = Tag(name=t)
+                db.session.add(tag)
+        tags.append(tag)
+        
+        food = Food(name=name, quantity=quantity, expiry_date=expiry_date, image_path=image_path, tags=tags)
         db.session.add(food)
         db.session.commit()
         return redirect(url_for('index'))
@@ -105,6 +148,19 @@ def edit(id):
             filename = secure_filename(image.filename)
             image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             food.image_path = f'static/images/{filename}'
+        
+        #tag処理
+        tags_input = request.form['tags']
+        tag_names = [t.strip() for t in tags_input.split(',') if t.strip()]
+        tags = []
+        for name in tag_names:
+            tag = Tag.query.filter_by(name=name).first()
+            if not tag:
+                tag = Tag(name=name)
+                db.session.add(tag)
+            tags.append(tag)
+            food.tags = tags
+
         db.session.commit()
         return redirect(url_for('index'))
 
@@ -152,5 +208,5 @@ if __name__ == '__main__':
 # 家計簿機能(?)
 # ポイント機能(?)
 # 画像機能　バーコード読み取りとかも?
-# タグ付けできるように、タグはユーザーが追加できるようにすればいいんじゃないかな() to do
+# タグ付けできるように、タグはユーザーが追加できるようにすればいいんじゃないかな(多分済)
 # レシピ提案(多分済)、画像登録(多分済)、読み取り機能
