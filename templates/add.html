@@ -8,12 +8,25 @@
     </div>
     <div class="form-group">
         <label>数量</label>
-        <input type="text" name="quantity" class="form-control" required>
+        <div class="input-group">
+            <button type="button" class="btn btn-outline-secondary" onclick="changeQuantity(-1)">−</button>
+            <input type="number" name="quantity" id="quantity" class="form-control" value="1" min="1" required>
+            <button type="button" class="btn btn-outline-secondary" onclick="changeQuantity(1)">＋</button>
+        </div>
     </div>
     <div class="form-group">
         <label>賞味期限</label>
         <input type="date" name="expiry_date" class="form-control" required>
     </div>
+    <script>
+    function changeQuantity(amount) {
+        const input = document.getElementById('quantity');
+        let value = parseInt(input.value) || 1;
+        value += amount;
+        if (value < 1) value = 1;
+        input.value = value;
+    }
+    </script>
     <div class="form-group">
         <label for="tags">タグ（カンマ区切り）</label>
         <input type="text" class="form-control" name="tags" id="tags" placeholder="例: 冷凍, 野菜">
