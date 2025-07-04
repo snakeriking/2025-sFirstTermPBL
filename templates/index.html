@@ -37,6 +37,10 @@
   <button type="button" class="btn btn-sm btn-outline-secondary" onclick="deselectAll()">全解除</button>
   <button type="button" class="btn btn-sm btn-success ms-2" onclick="searchSelectedRecipes()">選択した食品でレシピ検索</button>
 </div>
+<a href="{{ url_for('generate_recipe') }}"
+   class="btn btn-success my-2">
+  🥘 期限が近い食材でレシピ生成
+</a>
 
 <script>
   function selectAll() {

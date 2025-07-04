@@ -1,0 +1,31 @@
+{% extends 'layout.html' %}
+{% block content %}
+<h2>レシピ提案</h2>
+
+{% if message %}
+  <div class="alert alert-warning">{{ message }}</div>
+{% endif %}
+
+{% for r in recipes %}
+  <div class="card my-3">
+    <div class="card-header fw-bold">{{ r.title }}</div>
+    <div class="card-body">
+      <h5 class="mt-2">材料</h5>
+      <ul class="list-unstyled">
+        {% for ing in r.ingredients %}
+          <li>・{{ ing }}</li>
+        {% endfor %}
+      </ul>
+
+      <h5 class="mt-3">手順</h5>
+      <ol>
+        {% for step in r.steps %}
+          <li>{{ step }}</li>
+        {% endfor %}
+      </ol>
+    </div>
+  </div>
+{% endfor %}
+
+<a href="{{ url_for('index') }}" class="btn btn-secondary mt-4">← 戻る</a>
+{% endblock %}
