@@ -14,6 +14,9 @@
 <body>
     <div class="container">
         <h1 class="mb-4">🧊 食品管理アプリ</h1>
+        {% if tip %}
+        <p style="font-weight:bold; color:green;">食材豆知識: {{ tip }}</p>
+        {% endif %}
         {% block content %}{% endblock %}
     </div>
 </body>
