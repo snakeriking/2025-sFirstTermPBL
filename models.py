@@ -1,5 +1,6 @@
 # models.py
 from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime, timedelta
 
 db = SQLAlchemy()
 
@@ -27,3 +28,9 @@ class NotificationSetting(db.Model):
 class Tag(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique=True, nullable=False)
+    
+class RecipeLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    generated_at = db.Column(db.DateTime, default=datetime.utcnow)
+    ingredients = db.Column(db.Text)       # JSON で保持
+    recipes_json = db.Column(db.Text)
