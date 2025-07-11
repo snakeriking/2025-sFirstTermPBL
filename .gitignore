@@ -6,4 +6,4 @@ uv.lock
 .python-version
 .env
 .vscode
-/instance/*
+instance
