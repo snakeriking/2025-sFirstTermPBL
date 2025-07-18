@@ -6,6 +6,10 @@ from sqlalchemy import and_
 import os
 from werkzeug.utils import secure_filename
 
+import google.generativeai as genai
+import PIL
+
+
 UPLOAD_FOLDER = 'static/images'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
@@ -15,6 +19,9 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = 'AOBfwaoifasi12y98'  # 任意のランダムな文字列(秘密鍵)
 db.init_app(app)
+
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -239,13 +246,9 @@ def analyzed_tags(id):
             food.tags = tags
         db.session.commit()
         return redirect(url_for('index'))
-    #########################################################################
+    
+    
     print("asking to Gemini")
-    import google.generativeai as genai
-    import PIL
-
-    genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-    model = genai.GenerativeModel('gemini-1.5-flash')
     image_part = PIL.Image.open(food.image_path)
     prompt = """この画像に含まれている食品について、以下の形式で$name$に食品名が並ぶように結果だけ返してください。
 <input type="checkbox" name="tags" value="$name$">
