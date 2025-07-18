@@ -1,0 +1,17 @@
+{% extends 'layout.html' %}
+{% block content %}
+<h2>画像分析</h2>
+<form method="POST" enctype="multipart/form-data">
+    <div class="form-group">
+        <form method="POST" enctype="multipart/form-data">
+            <label>画像</label>
+            {% if food.image_path %}
+            <div><img src="{{ url_for('static', filename='images/' + food.image_path.split('/')[-1]) }}"
+                    style="max-height:100px;"></div>
+            {% endif %}
+            <input type="file" name="image" class="form-control-file" accept="image/*" capture="user">
+            <small class="form-text text-muted">新しい画像を選ぶと上書きされます</small>
+    </div>
+    <button type="submit" class="btn btn-primary">更新</button>
+</form>
+{% endblock %}

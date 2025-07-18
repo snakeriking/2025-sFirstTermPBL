@@ -104,6 +104,7 @@
         <a href="https://www.google.com/search?q={{ food.name }}+レシピ" class="btn btn-sm btn-success"
           target="_blank">レシピ検索</a>
         <a href="{{ url_for('edit', id=food.id) }}" class="btn btn-sm btn-secondary">編集</a>
+        <a href="{{ url_for('analyze_image_form', id=food.id) }}" class="btn btn-sm btn-secondary">画像検索</a>
         <a href="{{ url_for('delete', id=food.id) }}" class="btn btn-sm btn-danger">削除</a>
         {% if food.image_path %}
         <a href="{{ url_for('delete_image', id=food.id) }}" class="btn btn-sm btn-danger">画像を削除</a>

@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, redirect, url_for
+import re
+from flask import Flask, render_template, render_template_string, request, redirect, url_for
 from models import db, Food, Memo, NotificationSetting, Tag
 from datetime import datetime, timedelta 
 from sqlalchemy import and_
@@ -201,6 +202,96 @@ def delete_image(id):
         food.image_path = None
         db.session.commit()
     return redirect(url_for('index'))
+
+
+@app.route('/analyze_imageform/<int:id>', methods=['GET', 'POST'])
+def analyze_image_form(id):
+    food = Food.query.get(id)
+
+    if request.method == 'POST':
+        # 画像の処理
+        image = request.files['image']
+        if image and allowed_file(image.filename):
+            filename = secure_filename(image.filename)
+            image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            food.image_path = f'static/images/{filename}'
+        db.session.commit()
+
+        return redirect(url_for('analyzed_tags', id=id))
+        # return analyzed_tags(id)
+
+    return render_template('analyze_image_form.html', food=food)
+
+@app.route('/analyzed_tags/<int:id>', methods=['GET', 'POST'])
+def analyzed_tags(id):
+    food = Food.query.get(id)
+
+    if request.method == 'POST':
+        tag_names = request.form.getlist('tags')
+        print(tag_names)
+        tags = []
+        for name in tag_names:
+            tag = Tag.query.filter_by(name=name).first()
+            if not tag:
+                tag = Tag(name=name)
+                db.session.add(tag)
+            tags.append(tag)
+            food.tags = tags
+        db.session.commit()
+        return redirect(url_for('index'))
+    #########################################################################
+    print("asking to Gemini")
+    import google.generativeai as genai
+    import PIL
+
+    genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+    model = genai.GenerativeModel('gemini-1.5-flash')
+    image_part = PIL.Image.open(food.image_path)
+    prompt = """この画像に含まれている食品について、以下の形式で$name$に食品名が並ぶように結果だけ返してください。
+<input type="checkbox" name="tags" value="$name$">
+<label for="$num$">$name$</label><br>
+    """
+    response = model.generate_content([prompt, image_part])
+
+    print(response.text)
+    print("Gemini responded")
+    return render_template_string(f"""
+{{% extends 'layout.html' %}}
+{{% block content %}}
+<h2>食品タグ追加</h2>
+                                  
+<div><img src="{ url_for('static', filename='images/' + food.image_path.split('/')[-1]) }"
+style="max-height:100px;"></div>
+<form method="POST" enctype="multipart/form-data">
+{parse_llm_code_block(response.text)}
+<button type="submit" class="btn btn-primary">タグ追加</button>
+</form>
+{{% endblock %}}
+""")
+
+def parse_llm_code_block(content: str) -> dict:
+    """
+    ```json ... ``` 付きで返ってきた LLM 出力を
+    純粋な Python dict に変換するヘルパー。
+    """
+    if not isinstance(content, str):
+        raise TypeError("content must be str")
+
+    # 前後空白・改行を削る
+    raw = content.strip()
+
+    # 先頭が ``` で始まるならフェンスを除去
+    if raw.startswith("```"):
+        # 1行目の ```json などを落とす
+        raw = re.sub(r"^```[a-zA-Z]*\s*", "", raw, count=1)
+        # 末尾の ``` を落とす
+        raw = re.sub(r"\s*```$", "", raw, count=1)
+
+    # さらに余分な改行・空白を削る
+    raw = raw.strip()
+
+    # JSON → Python dict
+    return raw
 
 if __name__ == '__main__':
     app.run(debug=True)
